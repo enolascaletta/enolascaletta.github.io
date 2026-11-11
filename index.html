@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EMS Director Bewerbung</title>
+<meta name="description" content="Bewerbung von Enola Winchester als Leader der Emergency Medical Services – Rangstruktur, Führung und Abteilungen.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=Dancing+Script:wght@600&display=swap">
+<style>
+/* Layout: ein Patientenmonitor als Einstieg, danach eine Personalakte im Klinik-Look mit Vitalwerte-Panel, Rangtabelle und Abteilungs-Karten. Bewusst nur dunkles Theme (Monitor). */
+:root{
+  --ink:#08121d;
+  --panel:#0d1b2a;
+  --panel-2:#112336;
+  --line:#1d334a;
+  --text:#e4edf6;
+  --muted:#8ea3b8;
+  --trace:#5fe1ee;
+  --red:#ff4b5c;
+  --amber:#f3b74a;
+  --d-notfall:#ff5a67;
+  --d-allg:#5fe1ee;
+  --d-diag:#a993ff;
+  --d-betrieb:#f3b74a;
+  --d-ausb:#6fe3a5;
+  --d-lsfd:#ff8a3d;
+  --d-lead:#e4edf6;
+  --f-display:"Saira Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --f-sign:"Dancing Script","Brush Script MT",cursive;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:72px}
+body{margin:0;background:var(--ink);color:var(--text);font-family:var(--f-body);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+body.locked{overflow:hidden}
+a{color:var(--trace)}
+:focus-visible{outline:2px solid var(--trace);outline-offset:3px}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.mono{font-family:var(--f-mono)}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;line-height:1.05;margin:0;letter-spacing:.01em}
+.label{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+
+/* ---------- Boot / Monitor ---------- */
+#boot{display:none}
+.js #boot{display:flex}
+#boot{position:fixed;inset:0;z-index:100;background:radial-gradient(120% 90% at 50% 40%,#0d2033 0%,var(--ink) 70%);align-items:center;justify-content:center;padding:24px max(16px,env(safe-area-inset-left,0px));transition:opacity .8s ease, visibility .8s}
+#boot.gone{opacity:0;visibility:hidden}
+.monitor{width:min(760px,100%);border:1px solid var(--line);background:#050d16;border-radius:14px;box-shadow:0 0 0 6px #0b1826, 0 30px 80px #000a;overflow:hidden}
+.mon-top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--line);font-family:var(--f-mono);font-size:.75rem;letter-spacing:.1em;color:var(--muted)}
+.mon-top .rec{color:var(--red)}
+.mon-body{display:grid;grid-template-columns:1fr 150px;min-height:220px}
+.mon-trace{position:relative;border-right:1px solid var(--line);background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:24px 24px;background-position:-1px -1px;opacity:1}
+.mon-trace canvas{position:absolute;inset:0;width:100%;height:100%}
+.mon-trace .lead{position:absolute;left:10px;top:8px;font-family:var(--f-mono);font-size:.7rem;color:var(--trace)}
+.mon-vitals{display:flex;flex-direction:column;justify-content:center;gap:4px;padding:12px 16px;font-family:var(--f-mono)}
+.mon-vitals .hr{font-family:var(--f-display);font-weight:800;font-size:4rem;line-height:1;color:var(--trace);font-variant-numeric:tabular-nums}
+.mon-vitals .hr.alarm{color:var(--red);animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:.25}}
+.mon-log{padding:14px 16px;font-family:var(--f-mono);font-size:.85rem;min-height:132px;border-top:1px solid var(--line);color:#b9cadb}
+.mon-log p{margin:0 0 4px}
+.mon-log .ok{color:var(--d-ausb)}
+.mon-log .warn{color:var(--red)}
+.mon-actions{display:flex;gap:10px;flex-wrap:wrap;padding:0 16px 16px}
+.btn{font-family:var(--f-mono);font-size:.82rem;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--line);background:var(--panel-2);color:var(--text);padding:12px 16px;border-radius:8px;cursor:pointer}
+.btn:hover{border-color:var(--trace)}
+.btn-shock{background:var(--red);border-color:var(--red);color:#fff;font-weight:600;flex:1 1 260px}
+.btn-shock:hover{filter:brightness(1.1);border-color:#fff}
+.btn-shock:disabled{opacity:.5;cursor:default}
+#flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:120}
+#flash.on{animation:flash .35s ease-out}
+@keyframes flash{0%{opacity:.9}100%{opacity:0}}
+
+/* ---------- Header ---------- */
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:rgba(8,18,29,.92)}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:rgba(8,18,29,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.bar .wrap{display:flex;align-items:center;gap:16px;height:60px}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--f-display);font-weight:700;font-size:1.15rem;letter-spacing:.06em;white-space:nowrap;text-decoration:none;color:var(--text)}
+.cross{width:22px;height:22px;flex:none}
+.mini{flex:1;min-width:60px;height:34px;position:relative}
+.mini canvas{position:absolute;inset:0;width:100%;height:100%}
+.bar-hr{font-family:var(--f-mono);font-size:.8rem;color:var(--trace);white-space:nowrap;font-variant-numeric:tabular-nums}
+.bar-hr b{font-size:1rem}
+#soundBtn{padding:8px 10px;font-size:.7rem}
+nav.toc{border-bottom:1px solid var(--line);background:var(--ink)}
+nav.toc .wrap{display:flex;gap:6px;overflow-x:auto;padding-block:10px;scrollbar-width:none}
+nav.toc a{flex:none;font-family:var(--f-mono);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:6px;border:1px solid transparent}
+nav.toc a:hover{color:var(--text);border-color:var(--line)}
+
+/* ---------- Hero ---------- */
+.hero{padding-block:56px 40px;display:grid;grid-template-columns:1.3fr 1fr;gap:40px;align-items:end}
+.hero > *{min-width:0}
+.stamp{display:inline-flex;gap:10px;align-items:center;font-family:var(--f-mono);font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;color:var(--red);border:1px solid var(--red);padding:5px 10px;border-radius:4px;margin-bottom:22px}
+.stamp i{width:8px;height:8px;border-radius:50%;background:var(--red);animation:blink 1.2s steps(2) infinite}
+.hero h1{font-size:clamp(2.8rem,7.5vw,5.8rem);font-weight:800;text-transform:uppercase}
+.hero h1 small{display:block;font-size:.36em;font-weight:500;color:var(--muted);letter-spacing:.08em;margin-bottom:6px}
+.hero h1 span{color:var(--trace)}
+.hero p.lead{color:var(--muted);max-width:56ch;margin:18px 0 0;font-size:1.05rem}
+
+.vitals{border:1px solid var(--line);background:var(--panel);border-radius:12px;display:grid;grid-template-columns:1fr 1fr}
+.vital{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:2px}
+.vital:nth-child(odd){border-right:1px solid var(--line)}
+.vital:nth-last-child(-n+2){border-bottom:0}
+.vital .v{font-family:var(--f-display);font-weight:700;font-size:2rem;line-height:1.1;font-variant-numeric:tabular-nums}
+.vital .u{font-family:var(--f-mono);font-size:.75rem;color:var(--muted)}
+.v.c1{color:var(--trace)}.v.c2{color:var(--d-ausb)}.v.c3{color:var(--amber)}.v.c4{color:var(--red)}
+
+/* ---------- Akte / Stammdaten ---------- */
+.chart{border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden;margin-bottom:24px}
+.chart-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 18px;background:var(--panel-2);border-bottom:1px solid var(--line)}
+.fields{display:grid;grid-template-columns:repeat(4,1fr)}
+.field{padding:16px 18px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);min-width:0}
+.field:nth-child(4n){border-right:0}
+.field .val{font-weight:600;font-size:1.02rem;margin-top:4px;overflow-wrap:anywhere}
+.field .val.big{font-family:var(--f-display);font-size:1.4rem;letter-spacing:.02em}
+.copy{margin-left:8px;font-family:var(--f-mono);font-size:.68rem;letter-spacing:.08em;background:transparent;color:var(--trace);border:1px solid var(--line);border-radius:4px;padding:2px 6px;cursor:pointer;vertical-align:middle}
+
+/* ---------- Sections ---------- */
+section.sec{padding-block:56px;border-top:1px solid var(--line)}
+.sec-head{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;margin-bottom:28px}
+.sec-head .code{font-family:var(--f-mono);font-size:.8rem;color:var(--red);letter-spacing:.1em}
+.sec-head h2{font-size:clamp(2rem,4.5vw,3rem);font-weight:800;text-transform:uppercase}
+.sec-head p{flex-basis:100%;margin:6px 0 0;color:var(--muted);max-width:65ch}
+
+/* Rangtabelle */
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.chip{font-family:var(--f-mono);font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.chip i{width:8px;height:8px;border-radius:50%;background:var(--c,var(--muted))}
+.chip[aria-pressed="true"]{color:var(--text);border-color:var(--c,var(--text));background:var(--panel-2)}
+.table-box{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+table{width:100%;border-collapse:collapse;min-width:620px}
+th,td{text-align:left;padding:11px 16px;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);background:var(--panel-2);font-weight:500}
+td.nr{font-family:var(--f-mono);font-weight:600;font-variant-numeric:tabular-nums;width:64px;color:var(--muted)}
+td.name{font-weight:600}
+td.dept span{display:inline-flex;align-items:center;gap:8px;font-family:var(--f-mono);font-size:.78rem;color:var(--muted)}
+td.dept i{width:8px;height:8px;border-radius:50%;background:var(--c)}
+td.who{color:var(--muted);font-size:.92rem}
+td.who em{font-style:normal;color:var(--text)}
+tr.grp td{background:#0a1724;font-family:var(--f-mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--trace);padding-block:8px}
+tr.me td{background:rgba(255,75,92,.08)}
+tr.me td.name{color:var(--red)}
+.tag{display:inline-block;margin-left:8px;font-family:var(--f-mono);font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:var(--red);padding:2px 6px;border-radius:3px;vertical-align:middle}
+.note{margin-top:14px;color:var(--muted);font-size:.92rem;display:flex;gap:10px;align-items:flex-start}
+.note b{color:var(--text);font-weight:600}
+
+/* Führung */
+.lead-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.lead-card{border:1px solid var(--line);border-radius:12px;padding:22px;background:var(--panel);min-width:0}
+.lead-card.wide{grid-column:1/-1;background:linear-gradient(135deg,rgba(255,75,92,.12),transparent 60%),var(--panel);border-color:#3a2532}
+.lead-card h3{font-size:1.6rem;font-weight:700;text-transform:uppercase;margin:6px 0 10px}
+.lead-card p{margin:0;color:#c3d1de;max-width:70ch}
+.lead-card ul{margin:12px 0 0;padding-left:18px;color:#c3d1de}
+.lead-card li{margin-bottom:4px}
+
+/* Abteilungen */
+.depts{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.dept{border:1px solid var(--line);border-radius:12px;background:var(--panel);display:flex;flex-direction:column;min-width:0;border-top:3px solid var(--c)}
+.dept-in{padding:22px;display:flex;flex-direction:column;gap:12px;flex:1}
+.dept .k{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--c)}
+.dept h3{font-size:1.7rem;font-weight:700;text-transform:uppercase}
+.dept h3 small{font-family:var(--f-body);font-size:.55em;color:var(--muted);text-transform:none;font-weight:400;letter-spacing:0;margin-left:6px}
+.dept p{margin:0;color:#c3d1de}
+.req{font-size:.88rem;border-left:2px solid var(--c);padding:6px 0 6px 12px;color:var(--text);background:rgba(255,255,255,.02)}
+.ladder{list-style:none;margin:auto 0 0;padding:16px 22px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:6px 4px;align-items:center;font-family:var(--f-mono);font-size:.76rem}
+.ladder li{display:flex;align-items:center;gap:4px;color:var(--muted)}
+.ladder li span{border:1px solid var(--line);padding:3px 8px;border-radius:4px;color:var(--text)}
+.ladder li:not(:last-child)::after{content:"→";color:var(--c);margin-left:2px}
+
+/* Callouts */
+.callouts{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.callout{border:1px dashed var(--c);border-radius:12px;padding:24px;background:var(--panel);min-width:0}
+.callout h3{font-size:1.6rem;font-weight:700;text-transform:uppercase;margin:6px 0 10px;color:var(--c)}
+.callout p{margin:0 0 10px;color:#c3d1de}
+.callout p:last-child{margin-bottom:0}
+
+/* Schluss */
+.closing{display:grid;grid-template-columns:1.4fr 1fr;gap:40px;align-items:end}
+.closing > *{min-width:0}
+blockquote{margin:0;font-size:1.25rem;line-height:1.55;max-width:60ch;border-left:3px solid var(--red);padding-left:20px}
+blockquote em{color:var(--trace);font-style:normal}
+.closing p.thanks{color:var(--muted);margin:22px 0 0;max-width:60ch}
+.sign{border:1px solid var(--line);border-radius:12px;padding:22px;background:var(--panel)}
+.sign .s{font-family:var(--f-sign);font-size:2.8rem;line-height:1.1;color:var(--text);border-bottom:1px solid var(--muted);padding-bottom:6px;margin:8px 0}
+.sign .r{font-family:var(--f-mono);font-size:.8rem;color:var(--muted)}
+
+footer{border-top:1px solid var(--line);padding-block:24px;margin-top:40px}
+footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-family:var(--f-mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+
+@media (max-width:860px){
+  .hero,.closing{grid-template-columns:1fr}
+  .fields{grid-template-columns:repeat(2,1fr)}
+  .field:nth-child(4n){border-right:1px solid var(--line)}
+  .field:nth-child(2n){border-right:0}
+  .depts,.callouts,.lead-grid{grid-template-columns:1fr}
+}
+@media (max-width:520px){
+  .mon-body{grid-template-columns:1fr}
+  .mon-trace{border-right:0;border-bottom:1px solid var(--line);min-height:150px}
+  .mon-vitals{flex-direction:row;align-items:baseline;justify-content:space-between}
+  .mon-vitals .hr{font-size:3rem}
+  .brand .long{display:none}
+  .bar-hr{display:none}
+  .fields{grid-template-columns:1fr}
+  .field{border-right:0!important}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ BOOT-SEQUENZ ============ -->
+<div id="boot" role="dialog" aria-modal="true" aria-label="Akte öffnen">
+  <div class="monitor">
+    <div class="mon-top">
+      <span>LS-EMS // PILLBOX HILL MEDICAL CENTER // MONITOR 03</span>
+      <span class="rec">● AKTE #56372 GESPERRT</span>
+    </div>
+    <div class="mon-body">
+      <div class="mon-trace"><span class="lead">II</span><canvas id="bootCanvas" aria-hidden="true"></canvas></div>
+      <div class="mon-vitals">
+        <span class="label">HF / bpm</span>
+        <span class="hr alarm" id="bootHr">--</span>
+        <span class="label" id="bootState">ASYSTOLIE</span>
+      </div>
+    </div>
+    <div class="mon-log" id="bootLog" aria-live="polite"></div>
+    <div class="mon-actions">
+      <button class="btn btn-shock" id="shockBtn" disabled>Schock abgeben &amp; Akte öffnen</button>
+      <button class="btn" id="skipBtn">Direkt zur Akte</button>
+    </div>
+  </div>
+</div>
+<div id="flash"></div>
+
+<!-- ============ HEADER ============ -->
+<header class="bar">
+  <div class="wrap">
+    <a class="brand" href="#top">
+      <svg class="cross" viewBox="0 0 24 24" aria-hidden="true"><path fill="#ff4b5c" d="M9 2h6v7h7v6h-7v7H9v-7H2V9h7z"/></svg>
+      LS-EMS <span class="long">&nbsp;// Personalakte</span>
+    </a>
+    <div class="mini"><canvas id="miniCanvas" aria-hidden="true"></canvas></div>
+    <span class="bar-hr">HF <b id="miniHr">72</b></span>
+    <button class="btn" id="soundBtn" aria-pressed="false">Ton: aus</button>
+  </div>
+</header>
+<nav class="toc" aria-label="Inhalt">
+  <div class="wrap">
+    <a href="#akte">Stammdaten</a>
+    <a href="#raenge">Rangstruktur</a>
+    <a href="#fuehrung">Führung</a>
+    <a href="#abteilungen">Abteilungen</a>
+    <a href="#schluss">Schlusswort</a>
+  </div>
+</nav>
+
+<main id="top">
+  <!-- HERO -->
+  <div class="wrap hero">
+    <div>
+      <div class="stamp"><i></i>Bewerbung // Fraktionsleitung</div>
+      <h1><small>Bewerbung als</small>Director <span>of EMS</span></h1>
+      <p class="lead">Hiermit möchte ich mich als Leader der Emergency Medical Services bewerben. Bewerbung und Konzept von Enola Winchester.</p>
+    </div>
+    <div class="vitals" aria-label="Kennzahlen">
+      <div class="vital"><span class="label">Onlinezeit</span><span class="v c1">5–8</span><span class="u">Stunden / Tag</span></div>
+      <div class="vital"><span class="label">Belegschaft</span><span class="v c2">100 %</span><span class="u">wird komplett übernommen</span></div>
+      <div class="vital"><span class="label">Ränge im Konzept</span><span class="v c3">25</span><span class="u">von Suspended bis Director</span></div>
+      <div class="vital"><span class="label">Abteilungen</span><span class="v c4">5</span><span class="u">fachlich getrennt</span></div>
+    </div>
+  </div>
+
+  <!-- STAMMDATEN -->
+  <div class="wrap" id="akte">
+    <div class="chart">
+      <div class="chart-head"><span class="label">Personalakte // Stammdaten</span><span class="label">Static ID #56372</span></div>
+      <div class="fields">
+        <div class="field"><div class="label">Name IC</div><div class="val big">Enola Winchester</div></div>
+        <div class="field"><div class="label">Static ID</div><div class="val big mono">#56372</div></div>
+        <div class="field"><div class="label">Alter OOC</div><div class="val big">22 Jahre</div></div>
+        <div class="field"><div class="label">Onlinezeit pro Tag</div><div class="val big">5–8 Stunden</div></div>
+        <div class="field"><div class="label">Angestrebte Position</div><div class="val">Leader der EMS (Director of EMS)</div></div>
+        <div class="field"><div class="label">RP-Erfahrung (GTA 5)</div><div class="val">FiveM, Majestic</div></div>
+        <div class="field"><div class="label">Mitgebrachte Spieler</div><div class="val">Komplette Übernahme der aktuellen EMS-Belegschaft</div></div>
+        <div class="field"><div class="label">Discord</div><div class="val mono"><span id="dc">NaElly</span><button class="copy" id="copyBtn" type="button">Kopieren</button><div class="label" style="margin-top:4px">ID 715301456369942599</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RANGSTRUKTUR -->
+  <section class="sec" id="raenge">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="code">AKTE 1</span>
+        <h2>Rangstruktur</h2>
+        <p>25 Ränge in sechs Ebenen. Wer ausgebildet ist, wählt eine Fachabteilung und steigt dort auf. Nach Abteilung filtern:</p>
+      </div>
+      <div class="filters" id="filters" role="group" aria-label="Nach Abteilung filtern">
+        <button class="chip" data-f="all" aria-pressed="true">Alle</button>
+        <button class="chip" data-f="notfall" style="--c:var(--d-notfall)" aria-pressed="false"><i></i>Notfallmedizin</button>
+        <button class="chip" data-f="allg" style="--c:var(--d-allg)" aria-pressed="false"><i></i>Allgemeinmedizin</button>
+        <button class="chip" data-f="diag" style="--c:var(--d-diag)" aria-pressed="false"><i></i>Diagnostik</button>
+        <button class="chip" data-f="betrieb" style="--c:var(--d-betrieb)" aria-pressed="false"><i></i>Betriebsmedizin</button>
+        <button class="chip" data-f="ausb" style="--c:var(--d-ausb)" aria-pressed="false"><i></i>Ausbildung</button>
+      </div>
+      <div class="table-box">
+        <table>
+          <thead><tr><th>Rang</th><th>Bezeichnung</th><th>Bereich</th><th>Besetzung</th></tr></thead>
+          <tbody id="rankBody"></tbody>
+        </table>
+      </div>
+      <p class="note"><span class="mono" style="color:var(--amber)">HINWEIS</span><span><b>Senior Doctor und Chief Doctor gibt es in jeder medizinischen Abteilung.</b> Der Chief Doctor leitet die Abteilung, der Senior Doctor ist sein Stellvertreter.</span></p>
+    </div>
+  </section>
+
+  <!-- FÜHRUNG -->
+  <section class="sec" id="fuehrung">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="code">AKTE 2</span>
+        <h2>Führung &amp; Verantwortung</h2>
+        <p>Wer welche Entscheidungen trifft, ist klar geregelt.</p>
+      </div>
+      <div class="lead-grid">
+        <article class="lead-card wide">
+          <span class="label">Rang 24–25</span>
+          <h3>Direktion</h3>
+          <p>Die Direktion leitet das komplette Medical Department und trägt die Gesamtverantwortung für alle Angestellten. Dazu gehören auch die Gespräche mit den anderen Fraktionen, sowohl staatlich als auch Crime.</p>
+        </article>
+        <article class="lead-card">
+          <span class="label">Rang 22</span>
+          <h3>Supreme Doctor</h3>
+          <p>Der oberste Arzt im EMS. Kümmert sich um die Belange der Abteilungen, schlichtet bei Bedarf und hütet die internen Verordnungen und Dienstvorschriften.</p>
+          <ul><li>Leitung und Aufbau des <b>Personalrats</b>, damit alle Mitarbeiter stärker an Entscheidungen beteiligt werden</li></ul>
+        </article>
+        <article class="lead-card">
+          <span class="label">Rang 21</span>
+          <h3>Chief of Medical Operations</h3>
+          <p>Wird ausschließlich durch den Director of EMS berufen und ist nur ihm rechenschaftspflichtig. Hat sämtliche Ausbildungen durchlaufen und kann jeden Bereich im EMS abdecken.</p>
+          <ul>
+            <li>Leitet und organisiert das Personal bei Geiselnahmen und Großeinsätzen</li>
+            <li>Im Alltag keine Entscheidungsgewalt über Mitarbeiter, übernimmt das Kommando in Krisen, wenn die Direktion nicht verfügbar ist</li>
+          </ul>
+        </article>
+        <article class="lead-card">
+          <span class="label">Rang 19</span>
+          <h3>Chief Doctor</h3>
+          <p>Leitet eine zugewiesene Abteilung, ggf. auch ein Krankenhaus. Entscheidet zusammen mit seinem Stellvertreter (Senior Doctor) über Besetzung und Ernennung der Ärzte sowie die Kleiderordnung seiner Abteilung.</p>
+        </article>
+        <article class="lead-card">
+          <span class="label">Rang 1–5</span>
+          <h3>Auszubildende</h3>
+          <p>Die angehenden Ärzte lernen so viel wie möglich und suchen sich eine Abteilung aus, um künftig für die medizinische Versorgung der Bürger verantwortlich zu sein.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABTEILUNGEN -->
+  <section class="sec" id="abteilungen">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="code">AKTE 3</span>
+        <h2>Abteilungen</h2>
+        <p>Fünf Fachabteilungen, jede mit eigener Laufbahn bis zum Chief Doctor.</p>
+      </div>
+      <div class="depts">
+        <article class="dept" style="--c:var(--d-notfall)">
+          <div class="dept-in">
+            <span class="k">Abteilung NM</span>
+            <h3>Notfallmedizin <small>Emergency Medicine</small></h3>
+            <p>Versorgt die Verletzten auf den Straßen von San Andreas und fährt gemeinsam mit den anderen Abteilungen Geiselnahmen an. Baut Konvois auf, zur Versorgung des EMS und für Einsätze, und arbeitet eng mit den Chirurgen zusammen.</p>
+            <div class="req">Arbeitet eng mit den <b>Chirurgen</b> zusammen, um auf Notfälle angemessen reagieren zu können.</div>
+          </div>
+          <ol class="ladder"><li><span>Emergency Doctor</span></li><li><span>Trauma Surgeon</span></li><li><span>Senior Doctor</span></li><li><span>Chief Doctor</span></li></ol>
+        </article>
+        <article class="dept" style="--c:var(--d-allg)">
+          <div class="dept-in">
+            <span class="k">Abteilung AM</span>
+            <h3>Allgemeinmedizin <small>General Medicine</small></h3>
+            <p>Versorgt die Patienten im Krankenhaus, führt Untersuchungen und Behandlungen durch und übergibt schwierige Fälle an die Chirurgen.</p>
+            <div class="req">Schwierige Fälle werden bei Bedarf an die <b>Chirurgen</b> übergeben.</div>
+          </div>
+          <ol class="ladder"><li><span>Medical Doctor</span></li><li><span>Medical Specialist</span></li><li><span>Senior Doctor</span></li><li><span>Chief Doctor</span></li></ol>
+        </article>
+        <article class="dept" style="--c:var(--d-diag)">
+          <div class="dept-in">
+            <span class="k">Abteilung DX</span>
+            <h3>Diagnostik <small>Diagnostics</small></h3>
+            <p>Diagnose und Behandlung körperlicher und psychischer Leiden. Berät und unterstützt alle Abteilungen in medizinischen Fragen.</p>
+            <div class="req">Stellt <b>körperliche, psychische und Sondergutachten</b> aus.</div>
+          </div>
+          <ol class="ladder"><li><span>Trainee of Diagnostics</span></li><li><span>Diagnostician</span></li><li><span>Diagnostic Specialist</span></li><li><span>Senior Doctor</span></li><li><span>Chief Doctor</span></li></ol>
+        </article>
+        <article class="dept" style="--c:var(--d-betrieb)">
+          <div class="dept-in">
+            <span class="k">Abteilung BM</span>
+            <h3>Betriebsmedizin <small>State Company Doctor</small></h3>
+            <p>Medizinische Versorgung vorrangig von kriminellen Familien und Gangs. Nach entsprechender Ausbildung auch für die staatlichen Fraktionen: medizinische Gutachten, Feststellung der Dienstfähigkeit, Unterstützung in Bewerbungsphasen sowie Erste-Hilfe- und Impfkurse.</p>
+            <div class="req"><b>Voraussetzung:</b> ein vorhandener Facharzt, also eine bereits durchlaufene andere Abteilung. So bleibt die Qualität hoch.</div>
+          </div>
+          <ol class="ladder"><li><span>Trainee of State Med.</span></li><li><span>Company Doctor</span></li><li><span>State Doctor</span></li><li><span>Senior Doctor</span></li><li><span>Chief Doctor</span></li></ol>
+        </article>
+        <article class="dept" style="--c:var(--d-ausb);grid-column:1/-1">
+          <div class="dept-in">
+            <span class="k">Abteilung TD</span>
+            <h3>Ausbildung <small>Training Department</small></h3>
+            <p>Verantwortlich für Einstellung und Ausbildung aller Azubis. Legt gemeinsam mit Führungsebene und Direktion die Prüfungsregularien und Prüfungsvoraussetzungen fest.</p>
+            <div class="req">Die <b>Prüfungskommission</b> wird vom Chief of Supervisory und seinem Stellvertreter zusammengestellt und entscheidet am Schluss über die Zulassung als Arzt in unserem Krankenhaus. Die Direktion hat hier nur wenig Mitspracherecht.</div>
+          </div>
+          <ol class="ladder"><li><span>Trainee of Supervision</span></li><li><span>Training Supervisor</span></li><li><span>Chief of Supervisory</span></li></ol>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCHLUSS -->
+  <section class="sec" id="schluss">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="code">AKTE 4</span>
+        <h2>Schlusswort</h2>
+      </div>
+      <div class="closing">
+        <div>
+          <blockquote>Ich bedanke mich für Ihre Zeit und würde mich über eine <em>Einladung zu einem Gespräch</em> sehr freuen.</blockquote>
+        </div>
+        <div class="sign">
+          <span class="label">Mit freundlichen Grüßen</span>
+          <div class="s">Enola Winchester</div>
+          <div class="r">Enola Winchester<br>Bewerberin Director of EMS // Static ID #56372</div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Los Santos Emergency Medical Services</span>
+    <span>Enola Winchester // #56372</span>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  document.documentElement.classList.add("js");
+  var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------- Ränge ---------- */
+  var D = {notfall:["Notfallmedizin","--d-notfall"],allg:["Allgemeinmedizin","--d-allg"],diag:["Diagnostik","--d-diag"],betrieb:["Betriebsmedizin","--d-betrieb"],ausb:["Ausbildung","--d-ausb"],lsfd:["LSFD","--d-lsfd"],lead:["Leitung","--d-lead"],base:["Grundausbildung","--muted"]};
+  var ranks = [
+    ["Auszubildende"],
+    [1,"Suspended","base",""],
+    [2,"Trainee of MD","base",""],
+    [3,"Assistant Paramedic","base",""],
+    [4,"Paramedic","base",""],
+    [5,"Resident Doctor","base","Praktikant der Abteilungen"],
+    ["Start der Abteilungen"],
+    [6,"Trainee of Supervision","ausb",""],
+    [7,"Trainee of Diagnostics","diag",""],
+    [8,"Trainee of State Med.","betrieb",""],
+    [9,"Emergency Doctor","notfall",""],
+    [10,"Medical Doctor","allg",""],
+    [11,"Trauma Surgeon","notfall",""],
+    [12,"Diagnostician","diag",""],
+    [13,"Company Doctor","betrieb",""],
+    [14,"Medical Specialist","allg",""],
+    [15,"Diagnostic Specialist","diag",""],
+    [16,"State Doctor","betrieb",""],
+    [17,"Training Supervisor","ausb",""],
+    ["Abteilungsleiter"],
+    [18,"Senior Doctor","lead","Stellv. Abteilungsleitung"],
+    [19,"Chief Doctor","lead","Abteilungsleitung"],
+    [20,"Chief of Supervisory","ausb","Leitung Ausbildung"],
+    ["Medical Operations"],
+    [21,"Chief of Medical Operations","lead","Kommando bei Großeinsätzen"],
+    ["Führungsebene"],
+    [22,"Supreme Doctor","lead",""],
+    [23,"Assistant Director","lead",""],
+    ["Direktion"],
+    [24,"Deputy Director of EMS","lead","<em>Mia Scaletta</em>"],
+    [25,"Director of EMS","lead","<em>Enola Winchester</em>"]
+  ];
+  var body = document.getElementById("rankBody"), html = "", g = -1;
+  ranks.forEach(function(r){
+    if(r.length === 1){ g++; html += '<tr class="grp" data-g="'+g+'"><td colspan="4">'+r[0]+'</td></tr>'; return; }
+    var d = D[r[2]], me = r[0] === 25;
+    html += '<tr data-d="'+r[2]+'" data-g="'+g+'"'+(me?' class="me"':'')+'><td class="nr">'+String(r[0]).padStart(2,"0")+'</td><td class="name">'+r[1]+(me?'<span class="tag">Bewerber</span>':'')+'</td><td class="dept"><span><i style="--c:var('+d[1]+')"></i>'+d[0]+'</span></td><td class="who">'+(r[3]||"–")+'</td></tr>';
+  });
+  body.innerHTML = html;
+  var chips = document.querySelectorAll("#filters .chip");
+  chips.forEach(function(c){
+    c.addEventListener("click", function(){
+      var f = c.dataset.f;
+      chips.forEach(function(x){ x.setAttribute("aria-pressed", x === c ? "true" : "false"); });
+      var shown = {};
+      body.querySelectorAll("tr[data-d]").forEach(function(tr){
+        var ok = f === "all" || tr.dataset.d === f;
+        tr.hidden = !ok; if(ok) shown[tr.dataset.g] = 1;
+      });
+      body.querySelectorAll("tr.grp").forEach(function(tr){ tr.hidden = !shown[tr.dataset.g]; });
+    });
+  });
+
+  /* ---------- Kopieren ---------- */
+  document.getElementById("copyBtn").addEventListener("click", function(){
+    var b = this, t = document.getElementById("dc").textContent;
+    function done(){ b.textContent = "Kopiert"; setTimeout(function(){ b.textContent = "Kopieren"; }, 1500); }
+    function fallback(){ var r = document.createRange(); r.selectNodeContents(document.getElementById("dc")); var s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = "Markiert"; }
+    try { navigator.clipboard.writeText(t).then(done, fallback); } catch(e){ fallback(); }
+  });
+
+  /* ---------- Ton ---------- */
+  var soundOn = false, actx = null;
+  var soundBtn = document.getElementById("soundBtn");
+  function setSound(v){ soundOn = v; soundBtn.textContent = "Ton: " + (v ? "an" : "aus"); soundBtn.setAttribute("aria-pressed", v ? "true" : "false"); }
+  function ctx(){ try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); if(actx.state === "suspended") actx.resume(); } catch(e){ actx = null; } return actx; }
+  function beep(){
+    if(!soundOn) return; var a = ctx(); if(!a) return;
+    var o = a.createOscillator(), gn = a.createGain(), t = a.currentTime;
+    o.type = "sine"; o.frequency.value = 960;
+    gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(0.07, t+0.01); gn.gain.exponentialRampToValueAtTime(0.0001, t+0.09);
+    o.connect(gn).connect(a.destination); o.start(t); o.stop(t+0.1);
+  }
+  function zap(){
+    var a = ctx(); if(!a || !soundOn) return;
+    var o = a.createOscillator(), gn = a.createGain(), t = a.currentTime;
+    o.type = "sawtooth"; o.frequency.setValueAtTime(180, t); o.frequency.exponentialRampToValueAtTime(40, t+0.3);
+    gn.gain.setValueAtTime(0.25, t); gn.gain.exponentialRampToValueAtTime(0.0001, t+0.35);
+    o.connect(gn).connect(a.destination); o.start(t); o.stop(t+0.36);
+  }
+  soundBtn.addEventListener("click", function(){ setSound(!soundOn); if(soundOn) ctx(); });
+
+  /* ---------- EKG-Monitor ---------- */
+  function gauss(x, m, w, a){ return a * Math.exp(-Math.pow((x-m)/w, 2)); }
+  function pqrst(p){
+    return gauss(p,.15,.028,.12) + gauss(p,.28,.009,-.12) + gauss(p,.30,.011,1) + gauss(p,.325,.011,-.28) + gauss(p,.56,.05,.28);
+  }
+  function Monitor(canvas, opt){
+    this.c = canvas; this.g = canvas.getContext("2d"); this.o = opt;
+    this.mode = opt.mode || "sinus"; this.t = 0; this.x = 0; this.lastY = null; this.shockT = -9;
+    this.beat = 60/72; this.resize();
+    var self = this; window.addEventListener("resize", function(){ self.resize(); });
+  }
+  Monitor.prototype.resize = function(){
+    var d = window.devicePixelRatio || 1, w = this.c.clientWidth, h = this.c.clientHeight;
+    if(!w || !h) return;
+    this.w = w; this.h = h; this.c.width = w*d; this.c.height = h*d;
+    this.g.setTransform(d,0,0,d,0,0); this.x = 0; this.lastY = null;
+  };
+  Monitor.prototype.val = function(t){
+    if(this.mode === "flat") return (Math.random()-.5)*.025;
+    var s = t - this.shockT;
+    if(s >= 0 && s < .5) return 1.7*Math.exp(-s*9)*Math.sin(s*55);
+    if(s >= .5 && s < .9) return (Math.random()-.5)*.03;
+    var p = ((t - this.shockT - .9) / this.beat) % 1; if(p < 0) p += 1;
+    return pqrst(p);
+  };
+  Monitor.prototype.phase = function(t){ var p = ((t - this.shockT - .9) / this.beat) % 1; return p < 0 ? p+1 : p; };
+  Monitor.prototype.y = function(v){ return this.h*this.o.base - v*this.h*this.o.amp; };
+  Monitor.prototype.step = function(dt){
+    if(!this.w) { this.resize(); if(!this.w) return; }
+    var g = this.g, sp = this.o.speed, px = sp*dt, n = Math.max(1, Math.ceil(px/1.5));
+    g.lineWidth = this.o.lw; g.strokeStyle = this.o.color; g.lineJoin = "round"; g.shadowColor = this.o.color; g.shadowBlur = this.o.glow;
+    for(var i=0;i<n;i++){
+      var prevT = this.t; this.t += dt/n; this.x += px/n;
+      if(this.x > this.w){ this.x = 0; this.lastY = null; }
+      var y = this.y(this.val(this.t));
+      g.clearRect(this.x, 0, 18, this.h);
+      if(this.lastY !== null){ g.beginPath(); g.moveTo(this.x - px/n, this.lastY); g.lineTo(this.x, y); g.stroke(); }
+      this.lastY = y;
+      if(this.mode === "sinus" && this.t - this.shockT > .9){
+        var a = this.phase(prevT), b = this.phase(this.t);
+        if((a < .3 && b >= .3) || (a > b && b >= .3)) { if(this.o.onBeat) this.o.onBeat(); }
+      }
+    }
+  };
+  Monitor.prototype.fillStatic = function(){
+    this.resize(); var g = this.g; g.lineWidth = this.o.lw; g.strokeStyle = this.o.color; g.beginPath();
+    for(var x=0;x<=this.w;x+=1.5){ var t = x/this.o.speed + 2; var y = this.y(pqrst(((t)/this.beat)%1)); x ? g.lineTo(x,y) : g.moveTo(x,y); }
+    g.stroke();
+  };
+
+  var mini = new Monitor(document.getElementById("miniCanvas"), {speed:70, color:"#5fe1ee", glow:6, lw:1.5, base:.62, amp:.5, onBeat:function(){ if(!bootOpen) beep(); }});
+  mini.shockT = -10;
+
+  var bootEl = document.getElementById("boot"), bootOpen = true;
+  var boot = new Monitor(document.getElementById("bootCanvas"), {speed:150, color:"#5fe1ee", glow:10, lw:2.2, base:.6, amp:.42, mode:"flat", onBeat:function(){ beep(); }});
+
+  var last = performance.now();
+  function loop(now){
+    var dt = Math.min(.05, (now - last)/1000); last = now;
+    if(bootOpen) boot.step(dt); else mini.step(dt);
+    requestAnimationFrame(loop);
+  }
+  if(reduce){ mini.fillStatic(); } else { requestAnimationFrame(loop); }
+
+  /* ---------- Boot-Sequenz ---------- */
+  document.body.classList.add("locked");
+  var log = document.getElementById("bootLog"), hrEl = document.getElementById("bootHr"), state = document.getElementById("bootState");
+  var shockBtn = document.getElementById("shockBtn");
+  function line(txt, cls){ var p = document.createElement("p"); p.textContent = "> " + txt; if(cls) p.className = cls; log.appendChild(p); }
+  var intro = [
+    ["Verbindung zum EMS-Dispatch wird aufgebaut ..."],
+    ["Lade Personalakte #56372: WINCHESTER, ENOLA"],
+    ["Bewerbung: Director of EMS // Status: ausstehend"],
+    ["Keine Vitalzeichen. Defibrillator geladen: 200 J", "warn"]
+  ];
+  intro.forEach(function(l, i){ setTimeout(function(){ line(l[0], l[1]); if(i === intro.length-1) shockBtn.disabled = false; }, reduce ? 0 : 450 + i*650); });
+
+  function closeBoot(){
+    if(!bootOpen) return; bootOpen = false;
+    bootEl.classList.add("gone"); document.body.classList.remove("locked");
+    setSound(false);
+    setTimeout(function(){ bootEl.style.display = "none"; }, reduce ? 0 : 800);
+    if(!reduce){ mini.resize(); last = performance.now(); }
+  }
+  shockBtn.addEventListener("click", function(){
+    shockBtn.disabled = true; setSound(true); ctx(); zap();
+    var fl = document.getElementById("flash"); fl.classList.remove("on"); void fl.offsetWidth; fl.classList.add("on");
+    line("Schock abgegeben.");
+    boot.mode = "sinus"; boot.shockT = boot.t; hrEl.textContent = "--";
+    setTimeout(function(){
+      hrEl.classList.remove("alarm"); state.textContent = "SINUSRHYTHMUS";
+      line("ROSC. Sinusrhythmus erkannt.", "ok");
+      var n = 0, iv = setInterval(function(){ n += 4; if(n >= 72){ n = 72; clearInterval(iv); } hrEl.textContent = n; }, 40);
+    }, 900);
+    setTimeout(function(){ line("ZUGRIFF GEWÄHRT. Akte wird geöffnet ...", "ok"); }, 2200);
+    setTimeout(closeBoot, 3600);
+  });
+  document.getElementById("skipBtn").addEventListener("click", closeBoot);
+  document.addEventListener("keydown", function(e){ if(e.key === "Escape") closeBoot(); });
+  setTimeout(function(){ shockBtn.focus(); }, 50);
+})();
+</script>
+</body>
+</html>
